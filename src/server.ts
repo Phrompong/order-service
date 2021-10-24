@@ -1,6 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv-safe").config();
-import validateToken from "@pttdigital/token-validation";
 import { expressMiddleware } from "responsio";
 import cluster from "cluster";
 import os from "os";
@@ -105,14 +104,13 @@ async function init() {
 
   state
     .init()
-    .then(connectToDatabase)
+    //.then(connectToDatabase)
     .then(() => {
       app.use(helmet());
       app.use(cors());
       app.use(expressMiddleware());
       app.use(express.text({ type: "text/plain" }));
       app.use("/healthCheck", healthCheckRouter);
-      app.use(validateToken(process.env.SECRET));
       app.use("/api", routers);
 
       server = app.listen(process.env.PORT, () => {

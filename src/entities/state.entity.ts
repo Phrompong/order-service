@@ -1,10 +1,7 @@
 import "reflect-metadata";
 import { injectable } from "inversify";
 import winston, { format } from "winston";
-import {
-  ElasticsearchTransport,
-  ElasticsearchTransformer,
-} from "winston-elasticsearch";
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { name, version } = require("../../package.json");
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -42,9 +39,7 @@ export default class State implements IState {
 
     /* istanbul ignore else */
     if (process.env.NODE_ENV === "test") {
-      transports.push(
-        new winston.transports.File({ filename: "./logs/tests.log" })
-      );
+      transports.push(new winston.transports.File({ filename: "tests.log" }));
     }
 
     /* istanbul ignore if */
@@ -68,97 +63,7 @@ export default class State implements IState {
         })
       );
 
-      // * Add elasticsearch transport
-      const index = `logs-pttdigital-${name.replace(
-        "pttdigital.pos.oil.",
-        ""
-      )}`;
-
-      const esTransport = new ElasticsearchTransport({
-        level: "info",
-        clientOpts: {
-          node: process.env.ELASTICSEARCH_URI,
-          auth: {
-            username: process.env.ELASTICSEARCH_USERNAME || "",
-            password: process.env.ELASTICSEARCH_PASSWORD || "",
-          },
-        },
-        index,
-        indexPrefix: name,
-        dataStream: true,
-        transformer: (logData) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const transformed = ElasticsearchTransformer(logData) as any;
-          transformed["@version"] = version;
-          transformed["pid"] = process.pid;
-          transformed["kubernetes.pod.name"] = process.env.K8S_POD_NAME || "";
-          return transformed;
-        },
-        indexTemplate: {
-          priority: 200,
-          template: {
-            settings: {
-              index: {
-                mapping: {
-                  total_fields: {
-                    limit: "3000",
-                  },
-                },
-                refresh_interval: "5s",
-                number_of_shards: "1",
-                number_of_replicas: "0",
-              },
-            },
-            mappings: {
-              _source: {
-                enabled: true,
-              },
-              properties: {
-                severity: {
-                  index: true,
-                  type: "keyword",
-                },
-                source: {
-                  index: true,
-                  type: "keyword",
-                },
-                "@timestamp": {
-                  type: "date",
-                },
-                "@version": {
-                  type: "keyword",
-                },
-                fields: {
-                  dynamic: true,
-                  type: "object",
-                },
-                message: {
-                  index: true,
-                  type: "text",
-                },
-                "kubernetes.pod.name": {
-                  index: true,
-                  type: "text",
-                },
-                pid: {
-                  index: true,
-                  type: "int",
-                },
-              },
-            },
-          },
-          index_patterns: [`${index}*`],
-          data_stream: {},
-          composed_of: [],
-        },
-      });
-
-      esTransport.on("error", (error) => {
-        // eslint-disable-next-line no-console
-        console.error("Logger error", error);
-      });
-
-      transports.push(esTransport);
+      //transports.push(esTransport);
     }
 
     this.logger = winston.createLogger({
