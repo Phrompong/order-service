@@ -104,10 +104,11 @@ async function init() {
 
   state
     .init()
-    //.then(connectToDatabase)
+    .then(connectToDatabase)
     .then(() => {
       app.use(helmet());
       app.use(cors());
+      app.use(express.json());
       app.use(expressMiddleware());
       app.use(express.text({ type: "text/plain" }));
       app.use("/healthCheck", healthCheckRouter);
